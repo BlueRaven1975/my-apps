@@ -30,3 +30,31 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/go-hello-world:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/go-hello-world:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.ACTIONS_SA_KEY }}
+          source: 'go-hello-world/compose.yaml'
+          target: '~'
+
+      - name: Start the application
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.ACTIONS_SA_KEY }}
+          script: |
+            cd ~/go-hello-world
+            docker-compose down
+            docker-compose up -d --force-recreate
