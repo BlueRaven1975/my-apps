@@ -11,7 +11,7 @@ func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, World!")
 }
 
-func quoteHandler(w http.ResponseWriter, r *http.Request) {
+func goQuoteHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, quote.Go())
 }
 
