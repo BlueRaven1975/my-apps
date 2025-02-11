@@ -1,5 +1,5 @@
 services:
-  go-hello-world:
+  app:
     image: blueraven75/go-hello-world:latest
     ports:
       - "8080:8080"
