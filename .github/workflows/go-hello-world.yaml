@@ -56,5 +56,6 @@ jobs:
           key: ${{ secrets.ACTIONS_SA_KEY }}
           script: |
             cd ~/go-hello-world
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/go-hello-world:latest
             docker-compose down
             docker-compose up -d --force-recreate
