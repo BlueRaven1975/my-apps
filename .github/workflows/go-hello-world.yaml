@@ -61,4 +61,7 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/go-hello-world:latest
             docker-compose down
             docker-compose up -d --force-recreate
-            docker rmi $(docker images -f "dangling=true" -q)
+            DANGLING_IMAGES=$(docker images -f dangling=true -q)
+            if [ -n "$DANGLING_IMAGES" ]; then
+              docker rmi $DANGLING_IMAGES
+            fi
