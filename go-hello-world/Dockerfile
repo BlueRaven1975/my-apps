@@ -1,4 +1,4 @@
-# Use the official Go image from the Docker Hub to build the application
+# Use the latest stable Go image from the Docker Hub to build the application
 FROM golang:latest AS build
 
 # Set the working directory inside the container
