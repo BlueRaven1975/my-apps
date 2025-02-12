@@ -17,6 +17,9 @@ RUN go build -o go-hello-world
 # Use Alpine as a new base to shrink the final image size
 FROM alpine:latest
 
+# Set the working directory inside the container
+WORKDIR /app
+
 # Add glibc compatibility libraries
 RUN apk add libc6-compat
 
