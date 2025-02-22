@@ -41,16 +41,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy compose file
+      - name: Copy setup files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.ACTIONS_SA_KEY }}
-          source: 'go-hello-world/compose.yaml'
+          source: 'go-hello-world/compose.yaml,go-hello-world/schema.sql'
           target: '~'
 
-      - name: Start the application
+      - name: Setup and start the application
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -58,6 +58,10 @@ jobs:
           key: ${{ secrets.ACTIONS_SA_KEY }}
           script: |
             cd ~/go-hello-world
+            mysql -h {{ secrets.RDS_HOST }} -u {{ secrets.RDS_MASTER_USER }} -p{{ secrets.RDS_MASTER_PASS }} < schema.sql
+            mysql -h {{ secrets.RDS_HOST }} -u {{ secrets.RDS_MASTER_USER }} -p{{ secrets.RDS_MASTER_PASS }} -e "CREATE USER IF NOT EXISTS '{{ secrets.RDS_APP_USER }}'@'%' IDENTIFIED BY '{{ secrets.RDS_APP_PASS }}';"
+            mysql -h {{ secrets.RDS_HOST }} -u {{ secrets.RDS_MASTER_USER }} -p{{ secrets.RDS_MASTER_PASS }} -e "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO '{{ secrets.RDS_APP_USER }}'@'%';"
+            rm -f schema.sql
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/go-hello-world:latest
             docker-compose down
             docker-compose up -d --force-recreate

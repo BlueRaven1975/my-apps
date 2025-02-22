@@ -1,0 +1,1 @@
+CREATE DATABASE IF NOT EXISTS go_hello_world;
