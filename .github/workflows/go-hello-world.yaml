@@ -50,21 +50,35 @@ jobs:
           source: 'go-hello-world/compose.yaml,go-hello-world/schema.sql'
           target: '~'
 
-      - name: Setup and start the application
+      - name: Setup and execute the application
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.ACTIONS_SA_KEY }}
           script: |
+            # Get into the working directory
             cd ~/go-hello-world
+
+            # Create the database schema
             mysql -h "${{ secrets.RDS_HOST }}" -u "${{ secrets.RDS_MASTER_USER }}" -p"${{ secrets.RDS_MASTER_PASS }}" < schema.sql
-            mysql -h "${{ secrets.RDS_HOST }}" -u "${{ secrets.RDS_MASTER_USER }}" -p"${{ secrets.RDS_MASTER_PASS }}" -e "CREATE USER IF NOT EXISTS '${{ secrets.RDS_APP_USER }}'@'%' IDENTIFIED BY '${{ secrets.RDS_APP_PASS }}';"
-            mysql -h "${{ secrets.RDS_HOST }}" -u "${{ secrets.RDS_MASTER_USER }}" -p"${{ secrets.RDS_MASTER_PASS }}" -e "GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO '${{ secrets.RDS_APP_USER }}'@'%';"
+
+            # Create the application user
+            mysql -h "${{ secrets.RDS_HOST }}" -u "${{ secrets.RDS_MASTER_USER }}" -p"${{ secrets.RDS_MASTER_PASS }}" -e "
+              CREATE USER IF NOT EXISTS '${{ secrets.RDS_APP_USER }}'@'%' IDENTIFIED BY '${{ secrets.RDS_APP_PASS }}';
+              GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO '${{ secrets.RDS_APP_USER }}'@'%';
+              FLUSH PRIVILEGES;
+            "
+
+            # Cleanup the schema file
             rm -f schema.sql
+
+            # Pull the latest image and (re)start the application
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/go-hello-world:latest
-            docker-compose down
-            docker-compose up -d --force-recreate
+            docker compose down
+            docker compose up -d --force-recreate
+
+            # Cleanup dangling images
             DANGLING_IMAGES=$(docker images -f dangling=true -q)
             if [ -n "$DANGLING_IMAGES" ]; then
               docker rmi $DANGLING_IMAGES
