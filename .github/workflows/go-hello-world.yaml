@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'go-hello-world/**'
+  repository_dispatch:
+    types: [ec2-created]
   workflow_dispatch:
 
 jobs:
